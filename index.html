@@ -70,6 +70,21 @@
       font-weight: 600;
     }
 
+    .btn-change-key {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      margin-left: 10px;
+      transition: background 0.2s;
+    }
+
+    .btn-change-key:hover { background: rgba(255,255,255,0.3); }
+
     /* MAIN LAYOUT */
     .container {
       max-width: 900px;
@@ -615,6 +630,7 @@
     <p>Nutritionniste expert · Recettes équilibrées en 20 min</p>
   </div>
   <div class="header-badge">~500 kcal</div>
+  <button class="btn-change-key" onclick="resetApiKey()" title="Modifier la clé API">🔑 Clé API</button>
 </header>
 
 <div class="container">
@@ -806,12 +822,20 @@ Règles importantes :
   function saveApiKey() {
     const key = document.getElementById('apiKeyInput').value.trim();
     if (!key.startsWith('sk-ant-')) {
-      alert('Clé invalide. Elle doit commencer par "sk-ant-"');
+      alert('Clé invalide. Elle doit commencer par "sk-ant-"\n\nTrouve ta clé sur : console.anthropic.com → API Keys');
       return;
     }
     apiKey = key;
     localStorage.setItem('nutrichef_api_key', key);
     document.getElementById('apiBanner').style.display = 'none';
+  }
+
+  function resetApiKey() {
+    localStorage.removeItem('nutrichef_api_key');
+    apiKey = '';
+    document.getElementById('apiKeyInput').value = '';
+    document.getElementById('apiBanner').style.display = 'flex';
+    document.getElementById('apiBanner').scrollIntoView({ behavior: 'smooth' });
   }
 
   // ============================================================
@@ -971,7 +995,11 @@ Règles importantes :
 
     } catch (err) {
       removeTyping(typingId);
-      addMessage('ai', '', `<div class="error-msg">❌ ${err.message}</div>`);
+      const isKeyError = err.message.toLowerCase().includes('api key') || err.message.toLowerCase().includes('x-api-key') || err.message.includes('401');
+      const errHtml = isKeyError
+        ? `<div class="error-msg">❌ Clé API invalide ou expirée.<br><br>Clique sur <strong>🔑 Clé API</strong> en haut à droite pour en saisir une nouvelle.<br><small>Génère ta clé sur <strong>console.anthropic.com → API Keys</strong></small></div>`
+        : `<div class="error-msg">❌ ${err.message}</div>`;
+      addMessage('ai', '', errHtml);
     } finally {
       isStreaming = false;
       document.getElementById('sendBtn').disabled = false;
