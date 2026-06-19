@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Appel EPS — Gestion des séances</title>
+  <style>
+    :root {
+      --blue: #1d4ed8;
+      --blue-light: #3b82f6;
+      --blue-pale: #dbeafe;
+      --green: #16a34a;
+      --green-pale: #dcfce7;
+      --red: #dc2626;
+      --red-pale: #fee2e2;
+      --orange: #ea580c;
+      --orange-pale: #ffedd5;
+      --gray: #6b7280;
+      --gray-light: #f3f4f6;
+      --dark: #111827;
+      --white: #ffffff;
+      --radius: 14px;
+      --shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f0f4ff;
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--blue) 0%, #2563eb 100%);
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+
+    .header-icon { font-size: 30px; }
+
+    .header-text h1 { font-size: 20px; font-weight: 700; }
+    .header-text p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+
+    .header-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+
+    .btn-header {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      border-radius: 20px;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-header:hover { background: rgba(255,255,255,0.28); }
+
+    /* NAV TABS */
+    .nav-tabs {
+      background: white;
+      border-bottom: 1.5px solid #e5e7eb;
+      display: flex;
+      gap: 0;
+      padding: 0 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .nav-tab {
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-tab:hover { color: var(--blue); }
+    .nav-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+    /* VIEWS */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* CARDS */
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: #1e40af; transform: translateY(-1px); }
+    .btn-success { background: var(--green); color: white; }
+    .btn-success:hover { background: #15803d; }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-ghost { background: var(--gray-light); color: var(--dark); }
+    .btn-ghost:hover { background: #e5e7eb; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-xs { padding: 4px 9px; font-size: 11px; border-radius: 7px; }
+
+    /* FORM ELEMENTS */
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: white;
+      color: var(--dark);
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--blue-light);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 6px;
+    }
+
+    .form-group { margin-bottom: 14px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+
+    /* CLASSE CARDS */
+    .classes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .classe-card {
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: var(--radius);
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .classe-card:hover {
+      border-color: var(--blue-light);
+      box-shadow: 0 6px 24px rgba(59,130,246,0.15);
+      transform: translateY(-2px);
+    }
+
+    .classe-card .class-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--blue);
+      margin-bottom: 4px;
+    }
+
+    .classe-card .class-meta {
+      font-size: 12px;
+      color: var(--gray);
+      margin-bottom: 12px;
+    }
+
+    .classe-card .class-stats {
+      display: flex;
+      gap: 8px;
+    }
+
+    .stat-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .stat-badge.total { background: var(--blue-pale); color: var(--blue); }
+    .stat-badge.seances { background: var(--green-pale); color: var(--green); }
+
+    .classe-card .card-actions {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .classe-card:hover .card-actions { opacity: 1; }
+
+    /* ELEVES TABLE */
+    .eleves-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .eleve-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--gray-light);
+      border-radius: 10px;
+      transition: background 0.15s;
+    }
+
+    .eleve-row:hover { background: #e5e7eb; }
+
+    .eleve-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--blue-pale);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .eleve-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .eleve-num {
+      font-size: 11px;
+      color: var(--gray);
+      font-weight: 600;
+    }
+
+    /* APPEL VIEW */
+    .appel-header {
+      background: linear-gradient(135deg, var(--blue) 0%, #2563eb 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .appel-header .ah-info { flex: 1; }
+    .appel-header h2 { font-size: 22px; font-weight: 800; }
+    .appel-header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+    .appel-header .ah-stats {
+      display: flex;
+      gap: 12px;
+    }
+
+    .ah-stat {
+      text-align: center;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 10px 16px;
+      min-width: 70px;
+    }
+
+    .ah-stat .num { font-size: 24px; font-weight: 800; }
+    .ah-stat .lbl { font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* APPEL CONTROLS */
+    .appel-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* APPEL ELEVE CARDS */
+    .appel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .appel-card {
+      border: 2.5px solid #e5e7eb;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.18s;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: white;
+    }
+
+    .appel-card:hover { border-color: #9ca3af; transform: scale(1.02); }
+
+    .appel-card.present {
+      background: var(--green-pale);
+      border-color: var(--green);
+    }
+
+    .appel-card.absent {
+      background: var(--red-pale);
+      border-color: var(--red);
+      opacity: 0.85;
+    }
+
+    .appel-card.retard {
+      background: var(--orange-pale);
+      border-color: var(--orange);
+    }
+
+    .appel-card .ac-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .appel-card .ac-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .appel-card.present .ac-avatar { background: #bbf7d0; color: var(--green); }
+    .appel-card.absent .ac-avatar { background: #fecaca; color: var(--red); }
+    .appel-card.retard .ac-avatar { background: #fed7aa; color: var(--orange); }
+    .appel-card:not(.present):not(.absent):not(.retard) .ac-avatar { background: var(--blue-pale); color: var(--blue); }
+
+    .appel-card .ac-name {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .appel-card .ac-status {
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .appel-card.present .ac-status { background: #bbf7d0; color: var(--green); }
+    .appel-card.absent .ac-status { background: #fecaca; color: var(--red); }
+    .appel-card.retard .ac-status { background: #fed7aa; color: var(--orange); }
+    .appel-card:not(.present):not(.absent):not(.retard) .ac-status { background: var(--gray-light); color: var(--gray); }
+
+    .appel-card .ac-btn-row {
+      display: flex;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    .status-btn {
+      flex: 1;
+      border: none;
+      border-radius: 7px;
+      padding: 5px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .status-btn.p { background: #dcfce7; color: var(--green); }
+    .status-btn.p:hover, .status-btn.p.sel { background: var(--green); color: white; }
+    .status-btn.a { background: #fee2e2; color: var(--red); }
+    .status-btn.a:hover, .status-btn.a.sel { background: var(--red); color: white; }
+    .status-btn.r { background: #ffedd5; color: var(--orange); }
+    .status-btn.r:hover, .status-btn.r.sel { background: var(--orange); color: white; }
+
+    /* HISTORIQUE */
+    .seance-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .seance-row:hover {
+      border-color: var(--blue-light);
+      box-shadow: 0 2px 10px rgba(59,130,246,0.1);
+    }
+
+    .seance-date {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--blue);
+      min-width: 100px;
+    }
+
+    .seance-class { font-size: 13px; font-weight: 600; flex: 1; }
+    .seance-activite { font-size: 12px; color: var(--gray); }
+
+    .seance-pills { display: flex; gap: 6px; }
+
+    .pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    .pill.p { background: var(--green-pale); color: var(--green); }
+    .pill.a { background: var(--red-pale); color: var(--red); }
+    .pill.r { background: var(--orange-pale); color: var(--orange); }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: white;
+      border-radius: 18px;
+      padding: 28px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      animation: slideUp 0.25s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 22px;
+    }
+
+    /* PROGRESS BAR */
+    .progress-bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--gray);
+    }
+
+    .empty-state .es-icon { font-size: 52px; margin-bottom: 14px; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--dark); }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--dark);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 999;
+      animation: toastIn 0.3s ease;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    }
+
+    @keyframes toastIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* SECTION HEADER */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* DETAIL SEANCE */
+    .detail-stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .detail-stat {
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .detail-stat.p { background: var(--green-pale); }
+    .detail-stat.a { background: var(--red-pale); }
+    .detail-stat.r { background: var(--orange-pale); }
+
+    .detail-stat .ds-num { font-size: 32px; font-weight: 800; }
+    .detail-stat.p .ds-num { color: var(--green); }
+    .detail-stat.a .ds-num { color: var(--red); }
+    .detail-stat.r .ds-num { color: var(--orange); }
+    .detail-stat .ds-label { font-size: 12px; font-weight: 600; color: var(--gray); margin-top: 2px; }
+
+    .detail-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .detail-eleve {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--gray-light);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* SEARCH */
+    .search-input {
+      position: relative;
+    }
+
+    .search-input input {
+      padding-left: 38px;
+    }
+
+    .search-input::before {
+      content: '🔍';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      z-index: 1;
+    }
+
+    @media (max-width: 640px) {
+      .appel-grid { grid-template-columns: repeat(2, 1fr); }
+      .ah-stats { display: none !important; }
+      .appel-header { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 400px) {
+      .appel-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">🏃</div>
+  <div class="header-text">
+    <h1>Appel EPS</h1>
+    <p>Gestion de présence pour vos séances</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-header" onclick="openImportModal()">📥 Importer</button>
+    <button class="btn-header" onclick="exportData()">📤 Exporter</button>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="showView('classes')" id="tab-classes">🏫 Classes</div>
+  <div class="nav-tab" onclick="showView('appel')" id="tab-appel">📋 Appel</div>
+  <div class="nav-tab" onclick="showView('historique')" id="tab-historique">📅 Historique</div>
+</div>
+
+<!-- ==================== VUE CLASSES ==================== -->
+<div class="view active" id="view-classes">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-title">🏫 Mes Classes</div>
+      <button class="btn btn-primary" onclick="openClasseModal()">+ Nouvelle classe</button>
+    </div>
+
+    <div class="classes-grid" id="classesGrid">
+      <!-- populated by JS -->
+    </div>
+
+    <div id="emptyClasses" class="empty-state" style="display:none">
+      <div class="es-icon">🏫</div>
+      <h3>Aucune classe</h3>
+      <p>Commencez par créer vos classes et y ajouter vos élèves.</p>
+      <br>
+      <button class="btn btn-primary" onclick="openClasseModal()">+ Créer ma première classe</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VUE APPEL ==================== -->
+<div class="view" id="view-appel">
+  <div class="container">
+
+    <div class="card" id="appelConfig">
+      <div class="card-title">⚙️ Configurer la séance</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Classe</label>
+          <select id="selectClasse" onchange="onClasseChange()">
+            <option value="">— Sélectionner une classe —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date de la séance</label>
+          <input type="date" id="dateSeance" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Activité / Cycle</label>
+          <input type="text" id="activiteSeance" placeholder="Ex: Athlétisme, Natation, Football…" />
+        </div>
+        <div class="form-group">
+          <label>Heure (optionnel)</label>
+          <input type="text" id="heureSeance" placeholder="Ex: 10h00 – 11h00" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="startAppel()">📋 Commencer l'appel</button>
+    </div>
+
+    <div id="appelZone" style="display:none">
+      <div class="appel-header">
+        <div class="ah-info">
+          <h2 id="appelTitle">Appel</h2>
+          <p id="appelSubtitle"></p>
+          <div class="progress-bar" style="margin-top:12px; width:200px">
+            <div class="progress-fill" id="appelProgress" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="ah-stats" id="appelStatsBar">
+          <div class="ah-stat">
+            <div class="num" id="statPresent">0</div>
+            <div class="lbl">Présents</div>
+          </div>
+          <div class="ah-stat">
+            <div class="num" id="statAbsent">0</div>
+            <div class="lbl">Absents</div>
+          </div>
+          <div class="ah-stat">
+            <div class="num" id="statRetard">0</div>
+            <div class="lbl">Retards</div>
+          </div>
+          <div class="ah-stat">
+            <div class="num" id="statNon">0</div>
+            <div class="lbl">Non appelé</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="appel-controls">
+        <button class="btn btn-ghost btn-sm" onclick="setAll('present')">✅ Tous présents</button>
+        <button class="btn btn-ghost btn-sm" onclick="setAll('absent')">❌ Tous absents</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetAppel()">↺ Réinitialiser</button>
+        <button class="btn btn-success" onclick="saveSeance()" style="margin-left:auto">💾 Valider l'appel</button>
+      </div>
+
+      <div class="appel-grid" id="appelGrid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== VUE HISTORIQUE ==================== -->
+<div class="view" id="view-historique">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-title">📅 Historique des séances</div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <select id="filterClasse" onchange="renderHistorique()" style="width:160px; padding:8px 12px; font-size:13px;">
+          <option value="">Toutes les classes</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="clearHistorique()">🗑️ Effacer tout</button>
+      </div>
+    </div>
+
+    <div id="historiqueList">
+      <!-- populated by JS -->
+    </div>
+
+    <div id="emptyHistorique" class="empty-state" style="display:none">
+      <div class="es-icon">📅</div>
+      <h3>Aucune séance enregistrée</h3>
+      <p>Les séances validées apparaîtront ici.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Modal Classe -->
+<div class="modal-overlay" id="classeModal" style="display:none" onclick="closeModalOverlay(event, 'classeModal')">
+  <div class="modal">
+    <h3>🏫 <span id="classeModalTitle">Nouvelle classe</span></h3>
+    <input type="hidden" id="classeEditId" />
+    <div class="form-group">
+      <label>Nom de la classe</label>
+      <input type="text" id="classeName" placeholder="Ex: 5ème A, Terminale B, 3ème EPS2…" />
+    </div>
+    <div class="form-group">
+      <label>Établissement / Niveau (optionnel)</label>
+      <input type="text" id="classeNiveau" placeholder="Ex: Collège Victor Hugo – Niveau 5ème" />
+    </div>
+
+    <div style="margin: 18px 0 10px; font-size:15px; font-weight:700;">👤 Élèves</div>
+
+    <div class="form-group">
+      <label>Ajouter des élèves (un par ligne : Nom Prénom)</label>
+      <textarea id="elevesInput" rows="8" placeholder="MARTIN Sophie&#10;DUPONT Lucas&#10;BERNARD Emma&#10;LEROY Nathan&#10;MOREAU Camille"></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('classeModal')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveClasse()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detail Eleves -->
+<div class="modal-overlay" id="detailClasseModal" style="display:none" onclick="closeModalOverlay(event, 'detailClasseModal')">
+  <div class="modal" style="max-width:600px">
+    <h3 id="detailClasseTitle">Classe</h3>
+    <div id="detailClasseContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('detailClasseModal')">Fermer</button>
+      <button class="btn btn-primary" onclick="startAppelFromDetail()">📋 Faire l'appel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detail Séance -->
+<div class="modal-overlay" id="seanceModal" style="display:none" onclick="closeModalOverlay(event, 'seanceModal')">
+  <div class="modal" style="max-width:580px">
+    <h3 id="seanceModalTitle">Détail de la séance</h3>
+    <div id="seanceModalContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteSeance()">🗑️ Supprimer</button>
+      <button class="btn btn-ghost" onclick="closeModal('seanceModal')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Import -->
+<div class="modal-overlay" id="importModal" style="display:none" onclick="closeModalOverlay(event, 'importModal')">
+  <div class="modal">
+    <h3>📥 Importer des données</h3>
+    <p style="font-size:13px; color:var(--gray); margin-bottom:16px;">Colle le contenu JSON exporté précédemment.</p>
+    <div class="form-group">
+      <textarea id="importData" rows="8" placeholder='{"classes": [...], "seances": [...]}'></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('importModal')">Annuler</button>
+      <button class="btn btn-primary" onclick="importData()">Importer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// DATA STORE
+// ================================================================
+let db = {
+  classes: [],
+  seances: []
+};
+
+let currentAppel = {
+  classeId: null,
+  date: null,
+  activite: '',
+  heure: '',
+  statuts: {} // eleveId -> 'present' | 'absent' | 'retard'
+};
+
+let currentDetailClasseId = null;
+let currentSeanceId = null;
+
+// ================================================================
+// INIT
+// ================================================================
+function init() {
+  const saved = localStorage.getItem('eps_appel_db');
+  if (saved) {
+    try { db = JSON.parse(saved); } catch(e) {}
+  }
+  // Ensure arrays exist
+  if (!db.classes) db.classes = [];
+  if (!db.seances) db.seances = [];
+
+  // Set today's date
+  document.getElementById('dateSeance').value = today();
+
+  renderClasses();
+  renderHistorique();
+  populateSelects();
+}
+
+function save() {
+  localStorage.setItem('eps_appel_db', JSON.stringify(db));
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function initials(name) {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  return name[0].toUpperCase();
+}
+
+function formatDate(str) {
+  if (!str) return '';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ================================================================
+// VIEWS
+// ================================================================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'historique') renderHistorique();
+}
+
+// ================================================================
+// CLASSES
+// ================================================================
+function renderClasses() {
+  const grid = document.getElementById('classesGrid');
+  const empty = document.getElementById('emptyClasses');
+
+  if (db.classes.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.innerHTML = db.classes.map(cl => {
+    const nbEleves = cl.eleves.length;
+    const nbSeances = db.seances.filter(s => s.classeId === cl.id).length;
+    return `
+      <div class="classe-card" onclick="openDetailClasse('${cl.id}')">
+        <div class="card-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-xs" onclick="openClasseModal('${cl.id}')">✏️</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteClasse('${cl.id}')">🗑️</button>
+        </div>
+        <div class="class-name">${esc(cl.nom)}</div>
+        <div class="class-meta">${esc(cl.niveau || '–')}</div>
+        <div class="class-stats">
+          <span class="stat-badge total">👤 ${nbEleves} élève${nbEleves !== 1 ? 's' : ''}</span>
+          <span class="stat-badge seances">📋 ${nbSeances} séance${nbSeances !== 1 ? 's' : ''}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openClasseModal(id) {
+  document.getElementById('classeEditId').value = id || '';
+  document.getElementById('classeModalTitle').textContent = id ? 'Modifier la classe' : 'Nouvelle classe';
+
+  if (id) {
+    const cl = db.classes.find(c => c.id === id);
+    if (cl) {
+      document.getElementById('classeName').value = cl.nom;
+      document.getElementById('classeNiveau').value = cl.niveau || '';
+      document.getElementById('elevesInput').value = cl.eleves.map(e => e.nom).join('\n');
+    }
+  } else {
+    document.getElementById('classeName').value = '';
+    document.getElementById('classeNiveau').value = '';
+    document.getElementById('elevesInput').value = '';
+  }
+
+  document.getElementById('classeModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('classeName').focus(), 100);
+}
+
+function saveClasse() {
+  const nom = document.getElementById('classeName').value.trim();
+  if (!nom) { alert('Donnez un nom à la classe.'); return; }
+
+  const niveau = document.getElementById('classeNiveau').value.trim();
+  const elevesRaw = document.getElementById('elevesInput').value.trim();
+  const eleves = elevesRaw
+    ? elevesRaw.split('\n').map(l => l.trim()).filter(l => l).map(l => ({ id: uid(), nom: l }))
+    : [];
+
+  const editId = document.getElementById('classeEditId').value;
+
+  if (editId) {
+    const idx = db.classes.findIndex(c => c.id === editId);
+    if (idx >= 0) {
+      // Preserve existing ids for eleves if name matches
+      const existing = db.classes[idx].eleves;
+      const mergedEleves = eleves.map(e => {
+        const found = existing.find(ex => ex.nom.toLowerCase() === e.nom.toLowerCase());
+        return found ? found : e;
+      });
+      db.classes[idx] = { ...db.classes[idx], nom, niveau, eleves: mergedEleves };
+    }
+  } else {
+    db.classes.push({ id: uid(), nom, niveau, eleves, createdAt: Date.now() });
+  }
+
+  save();
+  renderClasses();
+  populateSelects();
+  closeModal('classeModal');
+  toast(editId ? 'Classe modifiée ✅' : 'Classe créée ✅');
+}
+
+function deleteClasse(id) {
+  if (!confirm('Supprimer cette classe et toutes ses séances ?')) return;
+  db.classes = db.classes.filter(c => c.id !== id);
+  db.seances = db.seances.filter(s => s.classeId !== id);
+  save();
+  renderClasses();
+  populateSelects();
+  toast('Classe supprimée');
+}
+
+function openDetailClasse(id) {
+  currentDetailClasseId = id;
+  const cl = db.classes.find(c => c.id === id);
+  if (!cl) return;
+
+  document.getElementById('detailClasseTitle').textContent = `🏫 ${cl.nom}`;
+
+  const html = `
+    <p style="font-size:13px; color:var(--gray); margin-bottom:16px;">${esc(cl.niveau || '')} — ${cl.eleves.length} élève${cl.eleves.length !== 1 ? 's' : ''}</p>
+    <div class="eleves-list">
+      ${cl.eleves.length === 0
+        ? '<p style="color:var(--gray); font-size:14px; text-align:center; padding:20px">Aucun élève dans cette classe.</p>'
+        : cl.eleves.map((e, i) => `
+          <div class="eleve-row">
+            <div class="eleve-avatar">${initials(e.nom)}</div>
+            <div class="eleve-name">${esc(e.nom)}</div>
+            <div class="eleve-num">#${i + 1}</div>
+          </div>`).join('')}
+    </div>`;
+
+  document.getElementById('detailClasseContent').innerHTML = html;
+  document.getElementById('detailClasseModal').style.display = 'flex';
+}
+
+function startAppelFromDetail() {
+  closeModal('detailClasseModal');
+  const cl = db.classes.find(c => c.id === currentDetailClasseId);
+  if (!cl) return;
+  document.getElementById('selectClasse').value = currentDetailClasseId;
+  showView('appel');
+  onClasseChange();
+}
+
+// ================================================================
+// APPEL
+// ================================================================
+function populateSelects() {
+  const sel = document.getElementById('selectClasse');
+  const filterSel = document.getElementById('filterClasse');
+
+  const makeOptions = (addAll) => {
+    const base = addAll ? '<option value="">Toutes les classes</option>' : '<option value="">— Sélectionner une classe —</option>';
+    return base + db.classes.map(cl => `<option value="${cl.id}">${esc(cl.nom)}</option>`).join('');
+  };
+
+  sel.innerHTML = makeOptions(false);
+  filterSel.innerHTML = makeOptions(true);
+}
+
+function onClasseChange() {
+  // just update, appel not started yet
+}
+
+function startAppel() {
+  const classeId = document.getElementById('selectClasse').value;
+  const date = document.getElementById('dateSeance').value;
+  const activite = document.getElementById('activiteSeance').value.trim();
+  const heure = document.getElementById('heureSeance').value.trim();
+
+  if (!classeId) { alert('Sélectionnez une classe.'); return; }
+  if (!date) { alert('Choisissez une date.'); return; }
+
+  const cl = db.classes.find(c => c.id === classeId);
+  if (!cl) return;
+
+  currentAppel = { classeId, date, activite, heure, statuts: {} };
+
+  document.getElementById('appelTitle').textContent = cl.nom;
+  document.getElementById('appelSubtitle').textContent =
+    [formatDate(date), activite, heure].filter(Boolean).join(' · ');
+
+  renderAppelGrid(cl);
+  updateAppelStats();
+
+  document.getElementById('appelConfig').style.display = 'none';
+  document.getElementById('appelZone').style.display = 'block';
+}
+
+function renderAppelGrid(cl) {
+  const grid = document.getElementById('appelGrid');
+  grid.innerHTML = cl.eleves.map(e => {
+    const st = currentAppel.statuts[e.id] || '';
+    return `
+      <div class="appel-card ${st}" id="card-${e.id}">
+        <div class="ac-top">
+          <div class="ac-avatar">${initials(e.nom)}</div>
+          <div class="ac-name">${esc(e.nom)}</div>
+        </div>
+        <div class="ac-status" id="status-${e.id}">${statusLabel(st)}</div>
+        <div class="ac-btn-row">
+          <button class="status-btn p ${st==='present'?'sel':''}" onclick="setStatus('${e.id}','present')">✅ Présent</button>
+          <button class="status-btn a ${st==='absent'?'sel':''}" onclick="setStatus('${e.id}','absent')">❌ Absent</button>
+          <button class="status-btn r ${st==='retard'?'sel':''}" onclick="setStatus('${e.id}','retard')">⏰ Retard</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function statusLabel(st) {
+  if (st === 'present') return '✅ Présent';
+  if (st === 'absent') return '❌ Absent';
+  if (st === 'retard') return '⏰ Retard';
+  return '— Non appelé';
+}
+
+function setStatus(eleveId, status) {
+  currentAppel.statuts[eleveId] = status;
+
+  const card = document.getElementById('card-' + eleveId);
+  const statusEl = document.getElementById('status-' + eleveId);
+
+  card.className = 'appel-card ' + status;
+  statusEl.textContent = statusLabel(status);
+
+  // Update buttons sel state
+  card.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('sel'));
+  card.querySelector(`.status-btn.${status === 'present' ? 'p' : status === 'absent' ? 'a' : 'r'}`)?.classList.add('sel');
+
+  updateAppelStats();
+}
+
+function setAll(status) {
+  const cl = db.classes.find(c => c.id === currentAppel.classeId);
+  if (!cl) return;
+  cl.eleves.forEach(e => setStatus(e.id, status));
+}
+
+function resetAppel() {
+  if (!confirm('Réinitialiser tous les statuts ?')) return;
+  currentAppel.statuts = {};
+  const cl = db.classes.find(c => c.id === currentAppel.classeId);
+  if (cl) renderAppelGrid(cl);
+  updateAppelStats();
+}
+
+function updateAppelStats() {
+  const cl = db.classes.find(c => c.id === currentAppel.classeId);
+  if (!cl) return;
+
+  const vals = Object.values(currentAppel.statuts);
+  const present = vals.filter(v => v === 'present').length;
+  const absent = vals.filter(v => v === 'absent').length;
+  const retard = vals.filter(v => v === 'retard').length;
+  const total = cl.eleves.length;
+  const non = total - vals.length;
+
+  document.getElementById('statPresent').textContent = present;
+  document.getElementById('statAbsent').textContent = absent;
+  document.getElementById('statRetard').textContent = retard;
+  document.getElementById('statNon').textContent = non;
+
+  const done = present + absent + retard;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('appelProgress').style.width = pct + '%';
+}
+
+function saveSeance() {
+  const cl = db.classes.find(c => c.id === currentAppel.classeId);
+  if (!cl) return;
+
+  const done = Object.keys(currentAppel.statuts).length;
+  if (done < cl.eleves.length) {
+    if (!confirm(`${cl.eleves.length - done} élève(s) n'ont pas encore été appelés. Enregistrer quand même ?`)) return;
+  }
+
+  const seance = {
+    id: uid(),
+    classeId: currentAppel.classeId,
+    classeNom: cl.nom,
+    date: currentAppel.date,
+    activite: currentAppel.activite,
+    heure: currentAppel.heure,
+    statuts: { ...currentAppel.statuts },
+    savedAt: Date.now()
+  };
+
+  db.seances.unshift(seance);
+  save();
+
+  // Reset
+  document.getElementById('appelConfig').style.display = 'block';
+  document.getElementById('appelZone').style.display = 'none';
+  document.getElementById('dateSeance').value = today();
+
+  toast('Séance enregistrée ✅');
+  showView('historique');
+}
+
+// ================================================================
+// HISTORIQUE
+// ================================================================
+function renderHistorique() {
+  const filter = document.getElementById('filterClasse').value;
+  let seances = db.seances;
+  if (filter) seances = seances.filter(s => s.classeId === filter);
+
+  const list = document.getElementById('historiqueList');
+  const empty = document.getElementById('emptyHistorique');
+
+  if (seances.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  // Group by date
+  const grouped = {};
+  seances.forEach(s => {
+    const key = s.date;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(s);
+  });
+
+  list.innerHTML = Object.entries(grouped)
+    .sort(([a],[b]) => b.localeCompare(a))
+    .map(([date, ss]) => {
+      const dateHtml = `<div style="font-size:12px; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:0.5px; margin: 16px 0 8px">${formatDate(date)}</div>`;
+      const rows = ss.map(s => {
+        const vals = Object.values(s.statuts);
+        const present = vals.filter(v => v === 'present').length;
+        const absent = vals.filter(v => v === 'absent').length;
+        const retard = vals.filter(v => v === 'retard').length;
+        return `
+          <div class="seance-row" onclick="openSeanceDetail('${s.id}')">
+            <div>
+              <div class="seance-class">${esc(s.classeNom)}</div>
+              <div class="seance-activite">${esc(s.activite || '—')}${s.heure ? ' · ' + esc(s.heure) : ''}</div>
+            </div>
+            <div class="seance-pills">
+              <span class="pill p">✅ ${present}</span>
+              <span class="pill a">❌ ${absent}</span>
+              ${retard > 0 ? `<span class="pill r">⏰ ${retard}</span>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+      return dateHtml + rows;
+    }).join('');
+}
+
+function openSeanceDetail(id) {
+  currentSeanceId = id;
+  const s = db.seances.find(x => x.id === id);
+  if (!s) return;
+
+  const cl = db.classes.find(c => c.id === s.classeId);
+
+  const vals = Object.values(s.statuts);
+  const present = vals.filter(v => v === 'present').length;
+  const absent = vals.filter(v => v === 'absent').length;
+  const retard = vals.filter(v => v === 'retard').length;
+  const total = cl ? cl.eleves.length : vals.length;
+
+  document.getElementById('seanceModalTitle').textContent = `📋 ${s.classeNom} — ${formatDate(s.date)}`;
+
+  const elevesInfo = cl
+    ? `
+      <div class="detail-stat-row">
+        <div class="detail-stat p"><div class="ds-num">${present}</div><div class="ds-label">Présents</div></div>
+        <div class="detail-stat a"><div class="ds-num">${absent}</div><div class="ds-label">Absents</div></div>
+        <div class="detail-stat r"><div class="ds-num">${retard}</div><div class="ds-label">Retards</div></div>
+      </div>
+      <div style="font-size:12px; color:var(--gray); margin-bottom:12px;">${s.activite || '—'}${s.heure ? ' · ' + s.heure : ''} · ${total} élève${total !== 1 ? 's' : ''}</div>
+      ${['present','absent','retard'].map(st => {
+        const ids = Object.entries(s.statuts).filter(([,v]) => v === st).map(([k]) => k);
+        if (!ids.length) return '';
+        const label = st === 'present' ? '✅ Présents' : st === 'absent' ? '❌ Absents' : '⏰ Retards';
+        return `
+          <div style="font-size:12px; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:0.4px; margin:14px 0 6px">${label}</div>
+          <div class="detail-list">
+            ${ids.map(eid => {
+              const el = cl.eleves.find(e => e.id === eid);
+              return el ? `<div class="detail-eleve"><span style="font-size:18px">${st === 'present' ? '✅' : st === 'absent' ? '❌' : '⏰'}</span> ${esc(el.nom)}</div>` : '';
+            }).join('')}
+          </div>`;
+      }).join('')}`
+    : '<p style="color:var(--gray); font-size:14px">La classe a été supprimée.</p>';
+
+  document.getElementById('seanceModalContent').innerHTML = elevesInfo;
+  document.getElementById('seanceModal').style.display = 'flex';
+}
+
+function deleteSeance() {
+  if (!confirm('Supprimer cette séance ?')) return;
+  db.seances = db.seances.filter(s => s.id !== currentSeanceId);
+  save();
+  closeModal('seanceModal');
+  renderHistorique();
+  toast('Séance supprimée');
+}
+
+function clearHistorique() {
+  if (!confirm('Supprimer tout l\'historique des séances ?')) return;
+  db.seances = [];
+  save();
+  renderHistorique();
+  toast('Historique effacé');
+}
+
+// ================================================================
+// IMPORT / EXPORT
+// ================================================================
+function exportData() {
+  const data = JSON.stringify(db, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `appel-eps-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Données exportées 📤');
+}
+
+function openImportModal() {
+  document.getElementById('importData').value = '';
+  document.getElementById('importModal').style.display = 'flex';
+}
+
+function importData() {
+  try {
+    const data = JSON.parse(document.getElementById('importData').value.trim());
+    if (!data.classes || !data.seances) throw new Error('Format invalide');
+    if (!confirm(`Importer ${data.classes.length} classe(s) et ${data.seances.length} séance(s) ? Les données actuelles seront fusionnées.`)) return;
+
+    // Merge: add classes/seances not already present
+    data.classes.forEach(cl => {
+      if (!db.classes.find(c => c.id === cl.id)) db.classes.push(cl);
+    });
+    data.seances.forEach(s => {
+      if (!db.seances.find(x => x.id === s.id)) db.seances.push(s);
+    });
+
+    save();
+    renderClasses();
+    renderHistorique();
+    populateSelects();
+    closeModal('importModal');
+    toast('Données importées ✅');
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+}
+
+// ================================================================
+// MODALS
+// ================================================================
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function closeModalOverlay(event, id) {
+  if (event.target === event.currentTarget) closeModal(id);
+}
+
+// ================================================================
+// TOAST
+// ================================================================
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ================================================================
+// UTILS
+// ================================================================
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ================================================================
+// KEYBOARD
+// ================================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['classeModal','detailClasseModal','seanceModal','importModal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el.style.display !== 'none') closeModal(id);
+    });
+  }
+});
+
+// ================================================================
+// BOOT
+// ================================================================
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
